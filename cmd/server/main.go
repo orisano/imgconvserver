@@ -5,6 +5,7 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"time"
 	"github.com/akito0107/imgconvserver"
+	"net/http"
 )
 
 func main() {
@@ -17,4 +18,6 @@ func main() {
 
 	r.Use(middleware.Timeout(60 * time.Second))
 	r.Get("/resize/{dx}/{dy}/{imagename}", imgconvserver.ResizeHandler)
+
+	http.ListenAndServe(":3000", r)
 }
