@@ -6,9 +6,29 @@ import (
 	"net/http"
 	"strconv"
 
+	"reflect"
+
+	"github.com/akito0107/imgconvserver/engine"
 	"github.com/disintegration/imaging"
 	"github.com/go-chi/chi"
 )
+
+func MakeHandler(d *Directive) func(w http.ResponseWriter, r *http.Request) {
+	eng, ok := engine.Engines[d.Engine]
+	if !ok {
+		log.Fatalf("Unsupported Engine %s", d.Function)
+	}
+	s, ok := eng.Specs()[d.Function]
+
+	if !ok {
+		log.Fatalf("Unsupported Function %s on Engine %s", d.Function, d.Engine)
+	}
+
+	method := reflect.ValueOf(eng).MethodByName(d.Function)
+
+	return func(w http.ResponseWriter, r *http.Request) {
+	}
+}
 
 func ResizeHandler(w http.ResponseWriter, r *http.Request) {
 	dx := chi.URLParam(r, "dx")

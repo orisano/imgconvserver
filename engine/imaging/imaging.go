@@ -8,15 +8,23 @@ import (
 )
 
 func init() {
-	spec := &eng.Spec{
-		SupportedFuncs: []string{"resize"},
-	}
-	eng.Register("imaging", &engine{}, spec)
+	eng.Register("imaging", &engine{})
 }
 
 type engine struct{}
 
-func (e *engine) Resize(src image.Image, dx, dy int) (image.Image, error) {
+func (engine) Specs() map[string]interface{} {
+	var specs = make(map[string]interface{})
+
+	specs["Resize"] = map[string]interface{}{
+		"dx": "int",
+		"dy": "int",
+	}
+
+	return specs
+}
+
+func (engine) Resize(src image.Image, dx, dy int) (image.Image, error) {
 	dist := imaging.Resize(src, dx, dy, imaging.Lanczos)
 
 	return dist, nil

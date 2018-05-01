@@ -16,6 +16,7 @@ type Directive struct {
 	UrlPattern string                 `toml:"urlpattern"`
 	Format     string                 `toml:"format"`
 	Function   string                 `toml:"function"`
+	Engine     string                 `toml:"engine"`
 	Parameters map[string]interface{} `toml:"parameters"`
 }
 

@@ -14,7 +14,7 @@ func Test_Parse(t *testing.T) {
 [[directives]]
 urlpattern = "/resize/{:dx}/{:dy}/{:imagename}.{:extension}"
 format = "png"
-function = "resize"
+function = "Resize"
 parameters = {dx = ":dx", dy = ":dy", quality = 0.7}
 `
 	conf := imgconvserver.Parse(strings.NewReader(input))
