@@ -7,20 +7,19 @@ import (
 	"github.com/disintegration/imaging"
 )
 
+var specs = make(map[string]interface{})
+
 func init() {
 	eng.Register("imaging", &engine{})
+	specs["Resize"] = map[string]interface{}{
+		"dx": "int",
+		"dy": "int",
+	}
 }
 
 type engine struct{}
 
 func (engine) Specs() map[string]interface{} {
-	var specs = make(map[string]interface{})
-
-	specs["Resize"] = map[string]interface{}{
-		"dx": "int",
-		"dy": "int",
-	}
-
 	return specs
 }
 

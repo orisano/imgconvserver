@@ -6,11 +6,17 @@ import (
 	"net/http"
 	"strconv"
 
-	"reflect"
+	"image"
+	"os"
+
+	"image/png"
+
+	"image/jpeg"
 
 	"github.com/akito0107/imgconvserver/engine"
 	"github.com/disintegration/imaging"
 	"github.com/go-chi/chi"
+	"golang.org/x/image/webp"
 )
 
 func MakeHandler(d *Directive) func(w http.ResponseWriter, r *http.Request) {
@@ -23,11 +29,65 @@ func MakeHandler(d *Directive) func(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		log.Fatalf("Unsupported Function %s on Engine %s", d.Function, d.Engine)
 	}
-
-	method := reflect.ValueOf(eng).MethodByName(d.Function)
+	var i interface{} = eng
 
 	return func(w http.ResponseWriter, r *http.Request) {
+		filepath := chi.URLParam(r, ":filepath")
+		im, err := openImage(filepath)
+		if err != nil {
+			http.Error(w, http.StatusText(400), 400)
+			return
+		}
+		switch d.Function {
+		case "Resize":
+			i2 := i.(engine.Resizer)
+			x := chi.URLParam(r, ":dx")
+			y := chi.URLParam(r, ":dy")
+
+			dx, err := strconv.Atoi(x)
+			if err != nil {
+				http.Error(w, http.StatusText(400), 400)
+				return
+			}
+			dy, err := strconv.Atoi(y)
+			if err != nil {
+				http.Error(w, http.StatusText(400), 400)
+				return
+			}
+			im, err = i2.Resize(im, dx, dy)
+			if err != nil {
+				http.Error(w, http.StatusText(500), 500)
+				return
+			}
+		}
+		of := chi.URLParam(r, ":format")
+		switch of {
+		case "png":
+			if err := png.Encode(w, im); err != nil {
+				http.Error(w, http.StatusText(500), 500)
+				return
+			}
+		case "jpeg", "JPEG", "jpg":
+			if err := jpeg.Encode(w, im, nil); err != nil {
+				http.Error(w, http.StatusText(500), 500)
+				return
+			}
+		case "webp":
+			if err := webp.Encode(w, im, nil); err != nil {
+				http.Error(w, http.StatusText(500), 500)
+				return
+			}
+		}
 	}
+}
+
+func openImage(filepath string) (image.Image, error) {
+	f, err := os.Open(filepath)
+	if err != nil {
+		return nil, err
+	}
+	i, _, err := image.Decode(f)
+	return i, err
 }
 
 func ResizeHandler(w http.ResponseWriter, r *http.Request) {
