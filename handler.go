@@ -9,14 +9,9 @@ import (
 	"image"
 	"os"
 
-	"image/png"
-
-	"image/jpeg"
-
 	"github.com/akito0107/imgconvserver/engine"
 	"github.com/disintegration/imaging"
 	"github.com/go-chi/chi"
-	"golang.org/x/image/webp"
 )
 
 func MakeHandler(d *Directive) func(w http.ResponseWriter, r *http.Request) {
@@ -24,12 +19,16 @@ func MakeHandler(d *Directive) func(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		log.Fatalf("Unsupported Engine %s", d.Function)
 	}
-	s, ok := eng.Specs()[d.Function]
-
-	if !ok {
-		log.Fatalf("Unsupported Function %s on Engine %s", d.Function, d.Engine)
+	resizer, ok := eng.(engine.Resizer)
+	if !ok && d.Function == "resize" {
+		log.Fatalf("Unsupported Resize function on engine %s", d.Engine)
 	}
-	var i interface{} = eng
+
+	encoder, ok := eng.(engine.Encoder)
+	if !ok {
+		log.Println("using Default Encoder")
+		encoder = &engine.DefaultEncoder{}
+	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
 		filepath := chi.URLParam(r, ":filepath")
@@ -40,44 +39,30 @@ func MakeHandler(d *Directive) func(w http.ResponseWriter, r *http.Request) {
 		}
 		switch d.Function {
 		case "Resize":
-			i2 := i.(engine.Resizer)
-			x := chi.URLParam(r, ":dx")
-			y := chi.URLParam(r, ":dy")
+			wid := chi.URLParam(r, ":dw")
+			hgt := chi.URLParam(r, ":dh")
 
-			dx, err := strconv.Atoi(x)
+			dw, err := strconv.Atoi(wid)
 			if err != nil {
 				http.Error(w, http.StatusText(400), 400)
 				return
 			}
-			dy, err := strconv.Atoi(y)
+			dh, err := strconv.Atoi(hgt)
 			if err != nil {
 				http.Error(w, http.StatusText(400), 400)
 				return
 			}
-			im, err = i2.Resize(im, dx, dy)
+			im, err = resizer.Resize(im, dw, dh)
 			if err != nil {
 				http.Error(w, http.StatusText(500), 500)
 				return
 			}
 		}
-		of := chi.URLParam(r, ":format")
-		switch of {
-		case "png":
-			if err := png.Encode(w, im); err != nil {
-				http.Error(w, http.StatusText(500), 500)
-				return
-			}
-		case "jpeg", "JPEG", "jpg":
-			if err := jpeg.Encode(w, im, nil); err != nil {
-				http.Error(w, http.StatusText(500), 500)
-				return
-			}
-		case "webp":
-			if err := webp.Encode(w, im, nil); err != nil {
-				http.Error(w, http.StatusText(500), 500)
-				return
-			}
+		of := d.Format
+		op := &engine.EncodeOptions{
+			Format: FromString(of),
 		}
+		encoder.Encode(w, im, op)
 	}
 }
 

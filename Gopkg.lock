@@ -29,22 +29,24 @@
   version = "v1.0.1"
 
 [[projects]]
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
+
+[[projects]]
   branch = "master"
   name = "golang.org/x/image"
   packages = [
     "bmp",
-    "riff",
     "tiff",
-    "tiff/lzw",
-    "vp8",
-    "vp8l",
-    "webp"
+    "tiff/lzw"
   ]
   revision = "f315e440302883054d0c2bd85486878cb4f8572c"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "5eedb75155f694154b1a764a395cb7b12da761266a78ad88926096c445025548"
+  inputs-digest = "54bf57e0b0d6d13badaa7d6b722a322248f9bd9bbdffad7a2ecafec24132dd71"
   solver-name = "gps-cdcl"
   solver-version = 1

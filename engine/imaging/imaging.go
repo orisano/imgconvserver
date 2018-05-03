@@ -19,12 +19,18 @@ func init() {
 
 type engine struct{}
 
+func (engine) Convert(src image.Image, opts *eng.ConvertOptions) (image.Image, error) {
+	if opts.Resize {
+		src = imaging.Resize(src, opts.Dw, opts.Dh, imaging.Lanczos)
+	}
+	return src, nil
+}
+
 func (engine) Specs() map[string]interface{} {
 	return specs
 }
 
-func (engine) Resize(src image.Image, dx, dy int) (image.Image, error) {
-	dist := imaging.Resize(src, dx, dy, imaging.Lanczos)
-
+func (engine) Resize(src image.Image, dw, dh int) (image.Image, error) {
+	dist := imaging.Resize(src, dw, dh, imaging.Lanczos)
 	return dist, nil
 }
