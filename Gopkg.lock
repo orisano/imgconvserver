@@ -39,14 +39,18 @@
   name = "golang.org/x/image"
   packages = [
     "bmp",
+    "riff",
     "tiff",
-    "tiff/lzw"
+    "tiff/lzw",
+    "vp8",
+    "vp8l",
+    "webp"
   ]
   revision = "f315e440302883054d0c2bd85486878cb4f8572c"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "54bf57e0b0d6d13badaa7d6b722a322248f9bd9bbdffad7a2ecafec24132dd71"
+  inputs-digest = "9eaaeff5f5ace01b76a3d01c140661084b0f0ee7878159810a0c13b5894bdf8d"
   solver-name = "gps-cdcl"
   solver-version = 1

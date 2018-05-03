@@ -5,7 +5,7 @@
 
 [[directives]]
 name = "simple resize"
-urlpattern = "/convert/{:dw}/{:dh}/{:imagename}"
+urlpattern = "/convert/{:dw}/{:dh}/*"
 of = "png"
 engine = "imaging"
   [[directives.converts]]

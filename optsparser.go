@@ -8,22 +8,35 @@ import (
 )
 
 type ServerConfig struct {
-	Mount      string      `toml:"mount"`
-	Directives []Directive `toml:"directives"`
+	Default    DefaultConfig `toml:"default"`
+	Directives []Directive   `toml:"directives"`
+}
+
+type DefaultConfig struct {
+	Src *ImgSrc `toml:"src"`
+}
+
+type ImgSrc struct {
+	Type  string `toml:"type"`
+	Mount string `toml:"mount"`
+	Host  string `toml:"host"`
+	Port  int    `toml:"port"`
 }
 
 type Directive struct {
-	UrlPattern string                 `toml:"urlpattern"`
-	Format     string                 `toml:"format"`
-	Function   string                 `toml:"function"`
-	Engine     string                 `toml:"engine"`
-	Parameters map[string]interface{} `toml:"parameters"`
+	Name       string    `toml:"name"`
+	Engine     string    `toml:"engine"`
+	UrlPattern string    `toml:"urlpattern"`
+	Input      string    `toml:"input"`
+	Src        *ImgSrc   `toml:"src"`
+	Format     string    `toml:"string"`
+	Converts   []Convert `toml:"converts"`
+	Values     map[string]interface{}
 }
 
-func DefaultHandlerOpt() *ServerConfig {
-	return &ServerConfig{
-		Mount: "./",
-	}
+type Convert struct {
+	Function   string                 `toml:"function"`
+	Parameters map[string]interface{} `toml:"parameters"`
 }
 
 func Parse(r io.Reader) *ServerConfig {
