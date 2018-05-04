@@ -1,13 +1,18 @@
 [default]
-  [default.src]
-  type = "fs"
-  mount = "./"
 
 [[directives]]
 name = "simple resize"
-urlpattern = "/convert/{:dw}/{:dh}/*"
+urlpattern = "/convert/w/([0-9]+)/h/([0-9]+)/(.+)"
 of = "png"
 engine = "imaging"
-  [[directives.converts]]
-  function = "resize"
-  parameters = {dw = ":dw", dh = ":dh"}
+[directives.values]
+"$dw" = "$1"
+"$dh" = "$2"
+"$filepath" = "$3"
+[directives.src]
+type = "fs"
+root = "/tmp"
+path = "$filepath"
+[[directives.converts]]
+function = "resize"
+parameters = {dw = "$dw", dh = "$dh"}

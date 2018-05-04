@@ -45,7 +45,7 @@ func getQueryOrURLParam(r *http.Request, key string) string {
 }
 
 func openImage(src *ImgSrc, filepath string) (image.Image, error) {
-	f, err := os.Open(src.Mount + filepath)
+	f, err := os.Open(src.Root + filepath)
 	if err != nil {
 		return nil, err
 	}

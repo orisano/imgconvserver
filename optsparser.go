@@ -17,10 +17,11 @@ type DefaultConfig struct {
 }
 
 type ImgSrc struct {
-	Type  string `toml:"type"`
-	Mount string `toml:"mount"`
-	Host  string `toml:"host"`
-	Port  int    `toml:"port"`
+	Type string `toml:"type"`
+	Root string `toml:"root"`
+	Path string `toml:"path"`
+	Host string `toml:"host"`
+	Port int    `toml:"port"`
 }
 
 type Directive struct {
@@ -28,7 +29,7 @@ type Directive struct {
 	Engine     string    `toml:"engine"`
 	UrlPattern string    `toml:"urlpattern"`
 	Input      string    `toml:"input"`
-	Src        *ImgSrc   `toml:"src"`
+	Src        ImgSrc    `toml:"src"`
 	Format     string    `toml:"string"`
 	Converts   []Convert `toml:"converts"`
 	Values     map[string]interface{}

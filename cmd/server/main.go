@@ -30,6 +30,7 @@ func main() {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	http.FileServer()
 
 	for _, d := range conf.Directives {
 		r.Get(d.UrlPattern, imgconvserver.MakeHandler(&d))
