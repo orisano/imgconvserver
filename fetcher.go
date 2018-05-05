@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"os"
 
+	"strings"
+
 	"github.com/pkg/errors"
 )
 
@@ -30,5 +32,9 @@ func Fetch(ctx context.Context, src *ImgSrc) (http.File, error) {
 type fsFetcher struct{}
 
 func (fsFetcher) Fetch(ctx context.Context, src *ImgSrc) (http.File, error) {
-	return os.Open(src.Root + src.Path)
+	root := src.Root
+	if !strings.HasSuffix(src.Root, "/") {
+		root = root + "/"
+	}
+	return os.Open(root + src.Path)
 }

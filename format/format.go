@@ -1,4 +1,4 @@
-package imgconvserver
+package format
 
 type Format int
 
@@ -13,5 +13,7 @@ func FromString(str string) Format {
 		return PNG
 	case "jpeg", "JPEG", "jpg":
 		return JPEG
+	default:
+		return PNG
 	}
 }

@@ -15,6 +15,7 @@ import (
 	"strconv"
 
 	"github.com/akito0107/imgconvserver/engine"
+	"github.com/akito0107/imgconvserver/format"
 	_ "golang.org/x/image/webp"
 )
 
@@ -41,6 +42,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		upath = "/" + upath
 		r.URL.Path = upath
 	}
+	log.Println(upath)
 
 	for p, d := range h.paths {
 		matches := p.FindStringSubmatch(upath)
@@ -85,6 +87,7 @@ func serve(w http.ResponseWriter, r *http.Request) {
 
 	file, err := Fetch(r.Context(), src)
 	if err != nil {
+		log.Println(err)
 		http.Error(w, http.StatusText(404), 404)
 		return
 	}
@@ -157,7 +160,7 @@ func serve(w http.ResponseWriter, r *http.Request) {
 	}
 	of := opt.Format
 	op := &engine.EncodeOptions{
-		Format: FromString(of),
+		Format: format.FromString(of),
 	}
 	encoder.Encode(w, im, op)
 }

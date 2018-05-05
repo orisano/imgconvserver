@@ -7,7 +7,7 @@ import (
 	"image/jpeg"
 	"image/png"
 
-	"github.com/akito0107/imgconvserver"
+	"github.com/akito0107/imgconvserver/format"
 	"github.com/pkg/errors"
 )
 
@@ -18,7 +18,6 @@ func Register(name string, engine interface{}) {
 }
 
 type Engine interface {
-	Specs() map[string]interface{}
 	Convert(src image.Image, opts *ConvertOptions) (image.Image, error)
 }
 
@@ -38,11 +37,11 @@ type DefaultEncoder struct{}
 
 func (d *DefaultEncoder) Encode(w io.Writer, src image.Image, opt *EncodeOptions) error {
 	switch opt.Format {
-	case imgconvserver.PNG:
+	case format.PNG:
 		if err := png.Encode(w, src); err != nil {
 			return errors.Errorf("encoding error %+v", err)
 		}
-	case imgconvserver.JPEG:
+	case format.JPEG:
 		if err := jpeg.Encode(w, src, &jpeg.Options{
 			Quality: opt.Quality,
 		}); err != nil {
@@ -66,7 +65,7 @@ type ResizeOptions struct {
 }
 
 type EncodeOptions struct {
-	Format  imgconvserver.Format
+	Format  format.Format
 	Quality int
 }
 

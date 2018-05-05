@@ -11,7 +11,7 @@ engine = "imaging"
 "$filepath" = "$3"
 [directives.src]
 type = "fs"
-root = "/tmp"
+root = "./tmp"
 path = "$filepath"
 [[directives.converts]]
 type = "resize"
