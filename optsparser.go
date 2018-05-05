@@ -20,8 +20,7 @@ type ImgSrc struct {
 	Type string `toml:"type"`
 	Root string `toml:"root"`
 	Path string `toml:"path"`
-	Host string `toml:"host"`
-	Port int    `toml:"port"`
+	Url  string `toml:"host"`
 }
 
 type Directive struct {
@@ -32,11 +31,11 @@ type Directive struct {
 	Src        ImgSrc    `toml:"src"`
 	Format     string    `toml:"string"`
 	Converts   []Convert `toml:"converts"`
-	Values     map[string]interface{}
+	Vars       map[string]interface{}
 }
 
 type Convert struct {
-	Function   string                 `toml:"function"`
+	Type       string                 `toml:"type"`
 	Parameters map[string]interface{} `toml:"parameters"`
 }
 

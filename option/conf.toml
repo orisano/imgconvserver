@@ -5,7 +5,7 @@ name = "simple resize"
 urlpattern = "/convert/w/([0-9]+)/h/([0-9]+)/(.+)"
 of = "png"
 engine = "imaging"
-[directives.values]
+[directives.vars]
 "$dw" = "$1"
 "$dh" = "$2"
 "$filepath" = "$3"
@@ -14,5 +14,5 @@ type = "fs"
 root = "/tmp"
 path = "$filepath"
 [[directives.converts]]
-function = "resize"
+type = "resize"
 parameters = {dw = "$dw", dh = "$dh"}
