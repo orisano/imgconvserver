@@ -17,10 +17,6 @@ func Register(name string, engine interface{}) {
 	Engines[name] = engine
 }
 
-type Engine interface {
-	Convert(src image.Image, opts *ConvertOptions) (image.Image, error)
-}
-
 type Converter interface {
 	Convert(src image.Image, opts *ConvertOptions) (image.Image, error)
 }

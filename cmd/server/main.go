@@ -8,6 +8,7 @@ import (
 
 	"github.com/akito0107/imgconvserver"
 	_ "github.com/akito0107/imgconvserver/engine/imaging"
+	_ "github.com/akito0107/imgconvserver/engine/vips"
 
 	_ "net/http/pprof"
 )

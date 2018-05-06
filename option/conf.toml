@@ -2,13 +2,14 @@
 
 [[directives]]
 name = "simple resize"
-urlpattern = "/convert/w/([0-9]+)/h/([0-9]+)/(.+)"
+urlpattern = "/convert/e/([a-z]+)/w/([0-9]+)/h/([0-9]+)/(.+)"
 of = "png"
-engine = "imaging"
+engine = "$engine"
 [directives.vars]
-"$dw" = "$1"
-"$dh" = "$2"
-"$filepath" = "$3"
+"$engine" = "$1"
+"$dw" = "$2"
+"$dh" = "$3"
+"$filepath" = "$4"
 [directives.src]
 type = "fs"
 root = "./tmp"
@@ -16,3 +17,4 @@ path = "$filepath"
 [[directives.converts]]
 type = "resize"
 parameters = {dw = "$dw", dh = "$dh"}
+

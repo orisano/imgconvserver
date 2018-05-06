@@ -8,19 +8,16 @@
   version = "v0.3.0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/daddye/vips"
+  packages = ["."]
+  revision = "87cfaf94f7a1b5dd0057a7dcea54d901f6ee5f62"
+
+[[projects]]
   name = "github.com/disintegration/imaging"
   packages = ["."]
   revision = "fd34ef7671b12cdf1b024d98c6b327b2770d32c4"
   version = "v1.4.1"
-
-[[projects]]
-  name = "github.com/go-chi/chi"
-  packages = [
-    ".",
-    "middleware"
-  ]
-  revision = "e83ac2304db3c50cf03d96a2fcd39009d458bc35"
-  version = "v3.3.2"
 
 [[projects]]
   name = "github.com/go-test/deep"
@@ -51,6 +48,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "9eaaeff5f5ace01b76a3d01c140661084b0f0ee7878159810a0c13b5894bdf8d"
+  inputs-digest = "5e02ab73509ef7dbad0d35be867e7ba2338506458b9cf428e9d66730b29a9284"
   solver-name = "gps-cdcl"
   solver-version = 1
