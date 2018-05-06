@@ -13,7 +13,7 @@ func init() {
 
 type engine struct{}
 
-func (engine) Resize(src image.Image, dw, dh int) (image.Image, error) {
-	dist := imaging.Resize(src, dw, dh, imaging.Lanczos)
+func (engine) Resize(src image.Image, opt *eng.ResizeOptions) (image.Image, error) {
+	dist := imaging.Resize(src, opt.Dw, opt.Dh, imaging.Lanczos)
 	return dist, nil
 }

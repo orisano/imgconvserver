@@ -23,14 +23,19 @@ type ImgSrc struct {
 	Url  string `toml:"host"`
 }
 
+type Output struct {
+	Format  string `toml:"format"`
+	Quality int    `toml:"quality"`
+}
+
 type Directive struct {
 	Name       string    `toml:"name"`
 	Engine     string    `toml:"engine"`
 	UrlPattern string    `toml:"urlpattern"`
 	Input      string    `toml:"input"`
 	Src        ImgSrc    `toml:"src"`
-	Format     string    `toml:"string"`
 	Converts   []Convert `toml:"converts"`
+	Output     Output    `toml:"output"`
 	Vars       map[string]interface{}
 }
 

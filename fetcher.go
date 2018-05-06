@@ -2,16 +2,16 @@ package imgconvserver
 
 import (
 	"context"
-	"net/http"
 	"os"
 
 	"strings"
 
 	"github.com/pkg/errors"
+	"io/ioutil"
 )
 
 type Fetcher interface {
-	Fetch(ctx context.Context, src *ImgSrc) (http.File, error)
+	Fetch(ctx context.Context, src *ImgSrc) ([]byte, error)
 }
 
 var fetchers = map[string]Fetcher{}
@@ -20,7 +20,7 @@ func init() {
 	fetchers["fs"] = &fsFetcher{}
 }
 
-func Fetch(ctx context.Context, src *ImgSrc) (http.File, error) {
+func Fetch(ctx context.Context, src *ImgSrc) ([]byte, error) {
 	typ := src.Type
 	fetcher, ok := fetchers[typ]
 	if !ok {
@@ -31,10 +31,14 @@ func Fetch(ctx context.Context, src *ImgSrc) (http.File, error) {
 
 type fsFetcher struct{}
 
-func (fsFetcher) Fetch(ctx context.Context, src *ImgSrc) (http.File, error) {
+func (fsFetcher) Fetch(ctx context.Context, src *ImgSrc) ([]byte, error) {
 	root := src.Root
 	if !strings.HasSuffix(src.Root, "/") {
 		root = root + "/"
 	}
-	return os.Open(root + src.Path)
+	f, err :=  os.Open(root + src.Path)
+	if err != nil {
+		return nil, err
+	}
+	return ioutil.ReadAll(f)
 }

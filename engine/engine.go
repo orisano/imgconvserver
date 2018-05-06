@@ -18,11 +18,11 @@ func Register(name string, engine interface{}) {
 }
 
 type Converter interface {
-	Convert(src image.Image, opts *ConvertOptions) (image.Image, error)
+	Convert(w io.Writer, src []byte, opts *ConvertOptions) error
 }
 
 type Resizer interface {
-	Resize(src image.Image, dw, dh int) (image.Image, error)
+	Resize(src image.Image, opt *ResizeOptions) (image.Image, error)
 }
 
 type Encoder interface {

@@ -12,11 +12,11 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 
-	"strconv"
-
 	"github.com/akito0107/imgconvserver/engine"
-	"github.com/akito0107/imgconvserver/format"
 	_ "golang.org/x/image/webp"
+	"bytes"
+	"github.com/akito0107/imgconvserver/format"
+	"strconv"
 )
 
 type handler struct {
@@ -66,7 +66,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			ctx := context.WithValue(r.Context(), "vars", vars)
-			ctx = context.WithValue(ctx, "opt", d)
+			ctx = context.WithValue(ctx, "drc", d)
 
 			serve(w, r.WithContext(ctx))
 			return
@@ -76,13 +76,14 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func serve(w http.ResponseWriter, r *http.Request) {
-	opt := r.Context().Value("opt").(Directive)
+	drc := r.Context().Value("drc").(Directive)
 	vars := r.Context().Value("vars").(map[string]interface{})
+
 	src := &ImgSrc{
-		Type: getOptValueString(opt.Src.Type, vars),
-		Root: getOptValueString(opt.Src.Root, vars),
-		Path: getOptValueString(opt.Src.Path, vars),
-		Url:  getOptValueString(opt.Src.Url, vars),
+		Type: getOptValueString(drc.Src.Type, vars),
+		Root: getOptValueString(drc.Src.Root, vars),
+		Path: getOptValueString(drc.Src.Path, vars),
+		Url:  getOptValueString(drc.Src.Url, vars),
 	}
 
 	file, err := Fetch(r.Context(), src)
@@ -92,13 +93,7 @@ func serve(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	im, _, err := image.Decode(file)
-	if err != nil {
-		http.Error(w, http.StatusText(400), 400)
-		return
-	}
-
-	engtype := getOptValueString(opt.Engine, vars)
+	engtype := getOptValueString(drc.Engine, vars)
 	eng, ok := engine.Engines[engtype]
 	if !ok {
 		log.Printf("Unsupported Engine %s", engtype)
@@ -106,13 +101,24 @@ func serve(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resizer, ok := eng.(engine.Resizer)
-	for _, c := range opt.Converts {
-		if !ok && c.Type == "resize" {
-			log.Printf("Unsupported Resize function on engine %s", engtype)
-			http.Error(w, http.StatusText(400), 400)
-			return
+	opt := &engine.ConvertOptions{}
+
+	if err := completionOptions(opt, drc, vars); err != nil {
+		http.Error(w, http.StatusText(400), 400)
+		return
+	}
+
+	if cvt, ok := eng.(engine.Converter); ok {
+		if err := cvt.Convert(w, file, opt); err != nil {
+			http.Error(w, http.StatusText(500), 500)
 		}
+		return
+	}
+
+	resizer, ok := eng.(engine.Resizer)
+	if !ok && opt.Resize {
+		http.Error(w, http.StatusText(400), 400)
+		return
 	}
 
 	encoder, ok := eng.(engine.Encoder)
@@ -121,33 +127,18 @@ func serve(w http.ResponseWriter, r *http.Request) {
 		encoder = &engine.DefaultEncoder{}
 	}
 
-	for _, c := range opt.Converts {
+	im, _, err := image.Decode(bytes.NewBuffer(file))
+	if err != nil {
+		http.Error(w, http.StatusText(400), 400)
+		return
+	}
+	for _, c := range drc.Converts {
 		switch c.Type {
 		case "resize":
-			wid := getOptValue(c.Parameters["dw"], vars)
-			hgt := getOptValue(c.Parameters["dh"], vars)
-
-			dw, ok := wid.(int)
-			if !ok {
-				wd := wid.(string)
-				dw, err = strconv.Atoi(wd)
-				if err != nil {
-					http.Error(w, http.StatusText(400), 400)
-					return
-				}
-			}
-
-			dh, ok := hgt.(int)
-			if !ok {
-				ht := hgt.(string)
-				dh, err = strconv.Atoi(ht)
-				if err != nil {
-					http.Error(w, http.StatusText(400), 400)
-					return
-				}
-			}
-
-			im, err = resizer.Resize(im, dw, dh)
+			im, err = resizer.Resize(im, &engine.ResizeOptions{
+				Dw: opt.Dw,
+				Dh: opt.Dh,
+			})
 			if err != nil {
 				http.Error(w, http.StatusText(500), 500)
 				return
@@ -158,11 +149,10 @@ func serve(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	of := opt.Format
-	op := &engine.EncodeOptions{
-		Format: format.FromString(of),
-	}
-	encoder.Encode(w, im, op)
+	encoder.Encode(w, im, &engine.EncodeOptions{
+		Format:  opt.Format,
+		Quality: opt.Quality,
+	})
 }
 
 func getOptValue(value interface{}, vars map[string]interface{}) interface{} {
@@ -178,4 +168,40 @@ func getOptValueString(value string, vars map[string]interface{}) string {
 		return vars[value].(string)
 	}
 	return value
+}
+
+func completionOptions(opt *engine.ConvertOptions,  drc Directive, vars map[string]interface{}) (err error) {
+	opt.Format = format.FromString(drc.Output.Format)
+	opt.Quality = drc.Output.Quality
+
+	for _, c := range drc.Converts {
+		switch c.Type {
+		case "resize":
+			opt.Resize = true
+			wid := getOptValue(c.Parameters["dw"], vars)
+			hgt := getOptValue(c.Parameters["dh"], vars)
+
+			dw, ok := wid.(int)
+			if !ok {
+				wd := wid.(string)
+				dw, err = strconv.Atoi(wd)
+				if err != nil {
+					return
+				}
+			}
+
+			dh, ok := hgt.(int)
+			if !ok {
+				ht := hgt.(string)
+				dh, err = strconv.Atoi(ht)
+				if err != nil {
+					return
+				}
+			}
+			opt.Dh = dh
+			opt.Dw = dw
+		}
+	}
+
+	return nil
 }

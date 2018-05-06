@@ -9,9 +9,29 @@ import (
 
 	eng "github.com/akito0107/imgconvserver/engine"
 	"github.com/daddye/vips"
+	"io"
 )
 
 type engine struct{}
+
+func (engine) Convert(w io.Writer, src []byte, opts *eng.ConvertOptions) error {
+	opt := vips.Options{
+		Width:        opts.Dw,
+		Height:       opts.Dh,
+		Crop:         false,
+		Extend:       vips.EXTEND_WHITE,
+		Interpolator: vips.BILINEAR,
+		Gravity:      vips.CENTRE,
+		Quality:      95,
+	}
+	out, err := vips.Resize(src, opt)
+	if err != nil {
+		return err
+	}
+	_, err = w.Write(out)
+
+	return err
+}
 
 func init() {
 	eng.Register("vips", &engine{})
