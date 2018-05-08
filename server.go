@@ -17,7 +17,10 @@ import (
 	"bytes"
 	"github.com/akito0107/imgconvserver/format"
 	"strconv"
+	"time"
 )
+
+const TimeFormat = "Mon, 02 Jan 2006 15:04:05 GMT"
 
 type handler struct {
 	conf  *DefaultConfig
@@ -149,6 +152,7 @@ func serve(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	w.Header().Set("Last-Modified", time.Now().Format(TimeFormat))
 	encoder.Encode(w, im, &engine.EncodeOptions{
 		Format:  opt.Format,
 		Quality: opt.Quality,
