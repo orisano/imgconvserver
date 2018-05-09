@@ -10,10 +10,12 @@ import (
 	_ "github.com/akito0107/imgconvserver/engine/imaging"
 	_ "github.com/akito0107/imgconvserver/engine/vips"
 
+	"fmt"
 	_ "net/http/pprof"
 )
 
 var configpath = flag.String("conf", "conf.toml", "config file path (default: conf.toml)")
+var port = flag.Int("port", 8080, "listen port")
 
 func main() {
 	flag.Parse()
@@ -26,5 +28,5 @@ func main() {
 	}
 
 	conf := imgconvserver.Parse(f)
-	log.Fatal(http.ListenAndServe(":8080", imgconvserver.Server(conf)))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), imgconvserver.Server(conf)))
 }
