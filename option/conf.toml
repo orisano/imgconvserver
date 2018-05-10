@@ -16,6 +16,7 @@ path = "$filepath"
 [directives.out]
 format = "jpeg"
 quality = 100
+cache = "30s"
 [[directives.converts]]
 type = "resize"
 parameters = {dw = "$dw", dh = "$dh"}

@@ -26,6 +26,7 @@ type ImgSrc struct {
 type Output struct {
 	Format  string `toml:"format"`
 	Quality int    `toml:"quality"`
+	Cache   string `toml:"cache"`
 }
 
 type Directive struct {
