@@ -55,6 +55,12 @@ func (cache) Start() error {
 func (c *cache) Get(ctx context.Context, key string) (interface{}, error) {
 	response := make(chan result)
 	c.requests <- request{key, response, ctx}
+	select {
+	case res := <-resopnse:
+		return res.value, res.err
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
 }
 
 func (cache) Delete(key string) bool {
