@@ -6,8 +6,9 @@ import (
 
 	"strings"
 
-	"github.com/pkg/errors"
 	"io/ioutil"
+
+	"github.com/pkg/errors"
 )
 
 type Fetcher interface {
@@ -17,7 +18,8 @@ type Fetcher interface {
 var fetchers = map[string]Fetcher{}
 
 func init() {
-	fetchers["fs"] = &fsFetcher{}
+	fetcher := &fsFetcher{}
+	fetchers["fs"] = fetcher
 }
 
 func Fetch(ctx context.Context, src *ImgSrc) ([]byte, error) {
@@ -29,14 +31,16 @@ func Fetch(ctx context.Context, src *ImgSrc) ([]byte, error) {
 	return fetcher.Fetch(ctx, src)
 }
 
-type fsFetcher struct{}
+type fsFetcher struct {
+	cache Cache
+}
 
 func (fsFetcher) Fetch(ctx context.Context, src *ImgSrc) ([]byte, error) {
 	root := src.Root
 	if !strings.HasSuffix(src.Root, "/") {
 		root = root + "/"
 	}
-	f, err :=  os.Open(root + src.Path)
+	f, err := os.Open(root + src.Path)
 	if err != nil {
 		return nil, err
 	}

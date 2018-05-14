@@ -1,9 +1,12 @@
 package imgconvserver
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 type Cache interface {
-	Get(ctx context.Context, key string) (interface{}, error)
+	Get(ctx context.Context, key string, expire int) (interface{}, error)
 	Delete(key string) bool
 }
 
@@ -24,14 +27,14 @@ const (
 type request struct {
 	key      string
 	response chan<- result
+	expire   int
 	tp       requestType
 	ctx      context.Context
 }
 
 type entry struct {
-	res    result
-	expire int
-	ready  chan struct{}
+	res   result
+	ready chan struct{}
 }
 
 func (e *entry) call(ctx context.Context, f Func, key string) {
@@ -55,9 +58,9 @@ func New(f Func) Cache {
 	return cache
 }
 
-func (c *cache) Get(ctx context.Context, key string) (interface{}, error) {
+func (c *cache) Get(ctx context.Context, key string, expire int) (interface{}, error) {
 	response := make(chan result)
-	c.requests <- request{key, response, get, ctx}
+	c.requests <- request{key, response, expire, get, ctx}
 	select {
 	case res := <-response:
 		return res.value, res.err
@@ -68,7 +71,7 @@ func (c *cache) Get(ctx context.Context, key string) (interface{}, error) {
 
 func (c *cache) Delete(key string) bool {
 	response := make(chan result)
-	c.requests <- request{key, response, del, nil}
+	c.requests <- request{key, response, -1, del, nil}
 	<-response
 	return true
 }
@@ -83,15 +86,25 @@ func (c *cache) server(f Func) {
 				e = &entry{ready: make(chan struct{})}
 				memo[req.key] = e
 				go e.call(req.ctx, f, req.key)
-
-				select {
-				case <-e.ready:
-					go e.deliver(req.response)
-				case <-req.ctx.Done():
-					delete(memo, req.key)
-				}
+				go func(req request) {
+					select {
+					case <-req.ctx.Done():
+						c.Delete(req.key)
+					case <-e.ready:
+						if req.expire > 0 {
+							time.Sleep(time.Millisecond * time.Duration(req.expire))
+							c.Delete(req.key)
+						}
+					}
+				}(req)
 			}
+			go e.deliver(req.response)
 		case del:
+			e, ok := memo[req.key]
+			if !ok && e.res.value == nil {
+				close(req.response)
+				continue
+			}
 			delete(memo, req.key)
 			close(req.response)
 		}
