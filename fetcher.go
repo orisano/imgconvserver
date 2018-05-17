@@ -12,6 +12,7 @@ import (
 )
 
 type Fetcher interface {
+	Init()
 	Fetch(ctx context.Context, src *ImgSrc) ([]byte, error)
 }
 
@@ -19,6 +20,7 @@ var fetchers = map[string]Fetcher{}
 
 func init() {
 	fetcher := &fsFetcher{}
+	fetcher.Init()
 	fetchers["fs"] = fetcher
 }
 
@@ -33,6 +35,11 @@ func Fetch(ctx context.Context, src *ImgSrc) ([]byte, error) {
 
 type fsFetcher struct {
 	cache Cache
+}
+
+func (f *fsFetcher) Init() {
+	fn := func() {}
+	f.cache = New()
 }
 
 func (fsFetcher) Fetch(ctx context.Context, src *ImgSrc) ([]byte, error) {
