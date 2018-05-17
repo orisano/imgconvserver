@@ -12,12 +12,14 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 
-	"github.com/akito0107/imgconvserver/engine"
 	_ "golang.org/x/image/webp"
+
 	"bytes"
-	"github.com/akito0107/imgconvserver/format"
 	"strconv"
 	"time"
+
+	"github.com/akito0107/imgconvserver/engine"
+	"github.com/akito0107/imgconvserver/format"
 )
 
 const TimeFormat = "Mon, 02 Jan 2006 15:04:05 GMT"
@@ -174,7 +176,7 @@ func getOptValueString(value string, vars map[string]interface{}) string {
 	return value
 }
 
-func completionOptions(opt *engine.ConvertOptions,  drc Directive, vars map[string]interface{}) (err error) {
+func completionOptions(opt *engine.ConvertOptions, drc Directive, vars map[string]interface{}) (err error) {
 	opt.Format = format.FromString(drc.Output.Format)
 	opt.Quality = drc.Output.Quality
 
