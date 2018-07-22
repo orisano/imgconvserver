@@ -38,8 +38,8 @@ type fsFetcher struct {
 }
 
 func (f *fsFetcher) Init() {
-	fn := func() {}
-	f.cache = New()
+	// fn := func() {}
+	// f.cache = New()
 }
 
 func (fsFetcher) Fetch(ctx context.Context, src *ImgSrc) ([]byte, error) {

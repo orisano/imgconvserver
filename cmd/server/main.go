@@ -12,12 +12,14 @@ import (
 
 	"fmt"
 	_ "net/http/pprof"
+	"runtime"
 )
 
 var configpath = flag.String("conf", "conf.toml", "config file path (default: conf.toml)")
 var port = flag.Int("port", 8080, "listen port")
 
 func main() {
+	runtime.GOMAXPROCS(4)
 	flag.Parse()
 	go func() {
 		log.Println(http.ListenAndServe("localhost:6060", nil))

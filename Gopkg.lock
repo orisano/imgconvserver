@@ -2,37 +2,48 @@
 
 
 [[projects]]
+  digest = "1:282acb7fe0ca456de4ea5c3174c2691a2bd74008462e966b69094ad0b2c23e6e"
   name = "github.com/BurntSushi/toml"
   packages = ["."]
+  pruneopts = "UT"
   revision = "b26d9c308763d68093482582cea63d69be07a0f0"
   version = "v0.3.0"
 
 [[projects]]
   branch = "master"
+  digest = "1:a888e86d5464b806c1dcbfb4d1ef66bac901a6bc4ad895d61b7cbd9c302a0ef3"
   name = "github.com/daddye/vips"
   packages = ["."]
+  pruneopts = "UT"
   revision = "87cfaf94f7a1b5dd0057a7dcea54d901f6ee5f62"
 
 [[projects]]
+  digest = "1:cf3996474a27bb2cbc5150e78b60795d2ddf8484858284c3550292298f8b5734"
   name = "github.com/disintegration/imaging"
   packages = ["."]
+  pruneopts = "UT"
   revision = "fd34ef7671b12cdf1b024d98c6b327b2770d32c4"
   version = "v1.4.1"
 
 [[projects]]
+  digest = "1:7f89e0c888fb99c61055c646f5678aae645b0b0a1443d9b2dcd9964d850827ce"
   name = "github.com/go-test/deep"
   packages = ["."]
+  pruneopts = "UT"
   revision = "6592d9cc0a499ad2d5f574fde80a2b5c5cc3b4f5"
   version = "v1.0.1"
 
 [[projects]]
+  digest = "1:40e195917a951a8bf867cd05de2a46aaf1806c50cf92eebf4c16f78cd196f747"
   name = "github.com/pkg/errors"
   packages = ["."]
+  pruneopts = "UT"
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
   version = "v0.8.0"
 
 [[projects]]
   branch = "master"
+  digest = "1:6f9d60c97440741baf1e35292365a2bfd1200a4bb5c42b5a3c59b9ec0d0982b3"
   name = "golang.org/x/image"
   packages = [
     "bmp",
@@ -41,13 +52,21 @@
     "tiff/lzw",
     "vp8",
     "vp8l",
-    "webp"
+    "webp",
   ]
+  pruneopts = "UT"
   revision = "f315e440302883054d0c2bd85486878cb4f8572c"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "5e02ab73509ef7dbad0d35be867e7ba2338506458b9cf428e9d66730b29a9284"
+  input-imports = [
+    "github.com/BurntSushi/toml",
+    "github.com/daddye/vips",
+    "github.com/disintegration/imaging",
+    "github.com/go-test/deep",
+    "github.com/pkg/errors",
+    "golang.org/x/image/webp",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1
