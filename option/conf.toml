@@ -20,4 +20,3 @@ cache = "30s"
 [[directives.converts]]
 type = "resize"
 parameters = {dw = "$dw", dh = "$dh"}
-

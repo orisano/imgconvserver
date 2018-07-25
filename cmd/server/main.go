@@ -5,14 +5,12 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"fmt"
+	"runtime"
+	_ "net/http/pprof"
 
 	"github.com/akito0107/imgconvserver"
 	_ "github.com/akito0107/imgconvserver/engine/imaging"
-	_ "github.com/akito0107/imgconvserver/engine/vips"
-
-	"fmt"
-	_ "net/http/pprof"
-	"runtime"
 )
 
 var configpath = flag.String("conf", "conf.toml", "config file path (default: conf.toml)")
