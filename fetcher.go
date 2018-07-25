@@ -34,7 +34,6 @@ func Fetch(ctx context.Context, src *ImgSrc) ([]byte, error) {
 }
 
 type fsFetcher struct {
-	cache Cache
 }
 
 func (f *fsFetcher) Init() {
