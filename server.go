@@ -26,10 +26,11 @@ import (
 
 const TimeFormat = "Mon, 02 Jan 2006 15:04:05 GMT"
 
+var cache sync.Map
+
 type handler struct {
 	conf  *DefaultConfig
 	paths map[*regexp.Regexp]Directive
-	cache *sync.Map
 }
 
 type record struct {
@@ -46,7 +47,6 @@ func Server(conf *ServerConfig) http.Handler {
 	return &handler{
 		conf:  &conf.Default,
 		paths: paths,
-		cache: &sync.Map{},
 	}
 }
 
@@ -58,7 +58,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Println(upath)
 
-	rec, ok := h.cache.Load(upath)
+	rec, ok := cache.Load(upath)
 	if ok {
 		record, ok := rec.(*record)
 		if !ok {
@@ -188,7 +188,7 @@ func (h *handler) serve(w http.ResponseWriter, r *http.Request) {
 	})
 
 	upath := r.Context().Value("upath").(string)
-	h.cache.Store(upath, &record{storedAt: now, buf: buf})
+	cache.Store(upath, &record{storedAt: now, buf: buf})
 }
 
 func getOptValue(value interface{}, vars map[string]interface{}) interface{} {
