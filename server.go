@@ -21,11 +21,13 @@ import (
 	"github.com/akito0107/imgconvserver/engine"
 	"github.com/akito0107/imgconvserver/format"
 	"sync"
-	)
+	"io"
+)
 
 const TimeFormat = "Mon, 02 Jan 2006 15:04:05 GMT"
 
 var cache sync.Map
+var imgcache sync.Map
 
 type handler struct {
 	conf  *DefaultConfig
@@ -57,19 +59,19 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Println(upath)
 
-	// rec, ok := cache.Load(upath)
-	// if ok {
-	// 	record, ok := rec.(*record)
-	// 	if !ok {
-	// 		http.Error(w, http.StatusText(500), 500)
-	// 		return
-	// 	}
-	// 	w.Header().Set("Last-Modified", record.storedAt.Format(TimeFormat))
-	// 	b := make([]byte, record.buf.Len())
-	// 	copy(b, record.buf.Bytes())
-	// 	io.Copy(w, bytes.NewBuffer(b))
-	// 	return
-	// }
+	rec, ok := cache.Load(upath)
+	if ok {
+		record, ok := rec.(*record)
+		if !ok {
+			http.Error(w, http.StatusText(500), 500)
+			return
+		}
+		w.Header().Set("Last-Modified", record.storedAt.Format(TimeFormat))
+		b := make([]byte, record.buf.Len())
+		copy(b, record.buf.Bytes())
+		io.Copy(w, bytes.NewBuffer(b))
+		return
+	}
 
 	for p, d := range h.paths {
 		matches := p.FindStringSubmatch(upath)
@@ -181,15 +183,14 @@ func serve(w http.ResponseWriter, r *http.Request) {
 	}
 	now := time.Now()
 	w.Header().Set("Last-Modified", now.Format(TimeFormat))
-	// var buf bytes.Buffer
-	// wr := io.MultiWriter(&buf, w)
-	encoder.Encode(w, im, &engine.EncodeOptions{
+	var buf bytes.Buffer
+	wr := io.MultiWriter(&buf, w)
+	encoder.Encode(wr, im, &engine.EncodeOptions{
 		Format:  opt.Format,
 		Quality: opt.Quality,
 	})
 
-	// upath := r.Context().Value("upath").(string)
-	// cache.Store(upath, &record{storedAt: now, buf: buf})
+	cache.Store(upath, &record{storedAt: now, buf: buf})
 }
 
 func getOptValue(value interface{}, vars map[string]interface{}) interface{} {
@@ -243,14 +244,13 @@ func completionOptions(opt *engine.ConvertOptions, drc Directive, vars map[strin
 	return nil
 }
 
-
 func decodeImage(path string, file []byte) (image.Image, error) {
-	if im, ok := cache.Load(path); ok {
+	if im, ok := imgcache.Load(path); ok {
 		i := im.(image.Image)
 		return i, nil
 	}
 	f := bytes.NewBuffer(file)
 	im, _, err := image.Decode(f)
-	cache.Store(path, im)
+	imgcache.Store(path, im)
 	return im, err
 }

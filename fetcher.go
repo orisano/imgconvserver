@@ -48,7 +48,7 @@ func (f *fsFetcher) Fetch(ctx context.Context, src *ImgSrc) ([]byte, error) {
 		root = root + "/"
 	}
 	p := root + src.Path
-	// if b, ok := f.cache.Load(p); ok {
+	// if b, ok := f.imgcache.Load(p); ok {
 	// 	bt, _ := b.([]byte)
 	// 	buf := make([]byte, len(bt))
 	// 	copy(buf, bt)
@@ -65,7 +65,7 @@ func (f *fsFetcher) Fetch(ctx context.Context, src *ImgSrc) ([]byte, error) {
 	}
 	// buf := make([]byte, len(b))
 	// copy(buf, b)
-	// f.cache.Store(p, b)
+	// f.imgcache.Store(p, b)
 
 	return b, nil
 }
