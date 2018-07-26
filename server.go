@@ -58,19 +58,19 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Println(upath)
 
-	rec, ok := cache.Load(upath)
-	if ok {
-		record, ok := rec.(*record)
-		if !ok {
-			http.Error(w, http.StatusText(500), 500)
-			return
-		}
-		w.Header().Set("Last-Modified", record.storedAt.Format(TimeFormat))
-		b := make([]byte, record.buf.Len())
-		copy(b, record.buf.Bytes())
-		io.Copy(w, bytes.NewBuffer(b))
-		return
-	}
+	// rec, ok := cache.Load(upath)
+	// if ok {
+	// 	record, ok := rec.(*record)
+	// 	if !ok {
+	// 		http.Error(w, http.StatusText(500), 500)
+	// 		return
+	// 	}
+	// 	w.Header().Set("Last-Modified", record.storedAt.Format(TimeFormat))
+	// 	b := make([]byte, record.buf.Len())
+	// 	copy(b, record.buf.Bytes())
+	// 	io.Copy(w, bytes.NewBuffer(b))
+	// 	return
+	// }
 
 	for p, d := range h.paths {
 		matches := p.FindStringSubmatch(upath)
@@ -187,8 +187,8 @@ func (h *handler) serve(w http.ResponseWriter, r *http.Request) {
 		Quality: opt.Quality,
 	})
 
-	upath := r.Context().Value("upath").(string)
-	cache.Store(upath, &record{storedAt: now, buf: buf})
+	// upath := r.Context().Value("upath").(string)
+	// cache.Store(upath, &record{storedAt: now, buf: buf})
 }
 
 func getOptValue(value interface{}, vars map[string]interface{}) interface{} {
