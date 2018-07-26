@@ -21,8 +21,7 @@ import (
 	"github.com/akito0107/imgconvserver/engine"
 	"github.com/akito0107/imgconvserver/format"
 	"sync"
-	"io"
-)
+	)
 
 const TimeFormat = "Mon, 02 Jan 2006 15:04:05 GMT"
 
@@ -180,9 +179,9 @@ func (h *handler) serve(w http.ResponseWriter, r *http.Request) {
 	}
 	now := time.Now()
 	w.Header().Set("Last-Modified", now.Format(TimeFormat))
-	var buf bytes.Buffer
-	wr := io.MultiWriter(&buf, w)
-	encoder.Encode(wr, im, &engine.EncodeOptions{
+	// var buf bytes.Buffer
+	// wr := io.MultiWriter(&buf, w)
+	encoder.Encode(w, im, &engine.EncodeOptions{
 		Format:  opt.Format,
 		Quality: opt.Quality,
 	})
