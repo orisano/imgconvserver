@@ -9,7 +9,7 @@ PACKAGENAME := github.com/akito0107/imgconvserver
 all: main
 
 main:
-	go build -ldflags "$(LDFLAGS)" -o bin/server cmd/server/*.go
+	go build -gcflags=-m -ldflags "$(LDFLAGS)" -o bin/server cmd/server/*.go
 
 ## Install dependencies
 setup:

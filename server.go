@@ -96,16 +96,17 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			ctx = context.WithValue(ctx, "drc", d)
 			ctx = context.WithValue(ctx, "upath", upath)
 
-			h.serve(w, r.WithContext(ctx))
+			serve(w, r.WithContext(ctx))
 			return
 		}
 	}
 	http.Error(w, http.StatusText(404), 404)
 }
 
-func (h *handler) serve(w http.ResponseWriter, r *http.Request) {
+func serve(w http.ResponseWriter, r *http.Request) {
 	drc := r.Context().Value("drc").(Directive)
 	vars := r.Context().Value("vars").(map[string]interface{})
+	upath := r.Context().Value("upath").(string)
 
 	src := &ImgSrc{
 		Type: getOptValueString(drc.Src.Type, vars),
@@ -136,12 +137,12 @@ func (h *handler) serve(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if cvt, ok := eng.(engine.Converter); ok {
-		if err := cvt.Convert(w, file, opt); err != nil {
-			http.Error(w, http.StatusText(500), 500)
-		}
-		return
-	}
+	// if cvt, ok := eng.(engine.Converter); ok {
+	// 	if err := cvt.Convert(w, file, opt); err != nil {
+	// 		http.Error(w, http.StatusText(500), 500)
+	// 	}
+	// 	return
+	// }
 
 	resizer, ok := eng.(engine.Resizer)
 	if !ok && opt.Resize {
@@ -155,7 +156,8 @@ func (h *handler) serve(w http.ResponseWriter, r *http.Request) {
 		encoder = &engine.DefaultEncoder{}
 	}
 
-	im, _, err := image.Decode(bytes.NewBuffer(file))
+	im, err := decodeImage(upath, file)
+
 	if err != nil {
 		http.Error(w, http.StatusText(400), 400)
 		return
@@ -239,4 +241,16 @@ func completionOptions(opt *engine.ConvertOptions, drc Directive, vars map[strin
 	}
 
 	return nil
+}
+
+
+func decodeImage(path string, file []byte) (image.Image, error) {
+	if im, ok := cache.Load(path); ok {
+		i := im.(image.Image)
+		return i, nil
+	}
+	f := bytes.NewBuffer(file)
+	im, _, err := image.Decode(f)
+	cache.Store(path, im)
+	return im, err
 }

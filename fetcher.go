@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 
 	"github.com/pkg/errors"
+	"sync"
 )
 
 type Fetcher interface {
@@ -34,21 +35,37 @@ func Fetch(ctx context.Context, src *ImgSrc) ([]byte, error) {
 }
 
 type fsFetcher struct {
+	cache *sync.Map
 }
 
 func (f *fsFetcher) Init() {
-	// fn := func() {}
-	// f.cache = New()
+	f.cache = &sync.Map{}
 }
 
-func (fsFetcher) Fetch(ctx context.Context, src *ImgSrc) ([]byte, error) {
+func (f *fsFetcher) Fetch(ctx context.Context, src *ImgSrc) ([]byte, error) {
 	root := src.Root
 	if !strings.HasSuffix(src.Root, "/") {
 		root = root + "/"
 	}
-	f, err := os.Open(root + src.Path)
+	p := root + src.Path
+	// if b, ok := f.cache.Load(p); ok {
+	// 	bt, _ := b.([]byte)
+	// 	buf := make([]byte, len(bt))
+	// 	copy(buf, bt)
+	// 	return buf, nil
+	// }
+
+	fi, err := os.Open(p)
 	if err != nil {
 		return nil, err
 	}
-	return ioutil.ReadAll(f)
+	b, err := ioutil.ReadAll(fi)
+	if err != nil {
+		return nil, err
+	}
+	// buf := make([]byte, len(b))
+	// copy(buf, b)
+	// f.cache.Store(p, b)
+
+	return b, nil
 }
