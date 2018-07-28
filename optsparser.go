@@ -36,7 +36,7 @@ type Directive struct {
 	Input      string    `toml:"input"`
 	Src        ImgSrc    `toml:"src"`
 	Converts   []Convert `toml:"converts"`
-	Output     Output    `toml:"output"`
+	Output     Output    `toml:"out"`
 	Vars       map[string]interface{}
 }
 
