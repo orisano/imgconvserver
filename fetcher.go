@@ -59,6 +59,7 @@ func (f *fsFetcher) Fetch(ctx context.Context, src *ImgSrc) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer fi.Close()
 	b, err := ioutil.ReadAll(fi)
 	if err != nil {
 		return nil, err
