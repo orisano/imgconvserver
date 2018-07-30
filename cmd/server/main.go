@@ -2,12 +2,12 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
-	"fmt"
-		_ "net/http/pprof"
 
 	"github.com/akito0107/imgconvserver"
 	_ "github.com/akito0107/imgconvserver/engine/imaging"
