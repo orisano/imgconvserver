@@ -246,12 +246,7 @@ func completionOptions(opt *engine.ConvertOptions, drc Directive, vars map[strin
 }
 
 func decodeImage(path string, file []byte) (image.Image, error) {
-	if im, ok := imgcache.Load(path); ok {
-		i := im.(image.Image)
-		return i, nil
-	}
-	f := bytes.NewBuffer(file)
+	f := bytes.NewReader(file)
 	im, _, err := image.Decode(f)
-	imgcache.Store(path, im)
 	return im, err
 }
