@@ -250,3 +250,19 @@ func decodeImage(path string, file []byte) (image.Image, error) {
 	im, _, err := image.Decode(f)
 	return im, err
 }
+
+type convError struct {
+	code int
+	err  error
+}
+
+func (ce *convError) Error() string {
+	if ce.err != nil {
+		return ce.err.Error()
+	}
+	return http.StatusText(ce.code)
+}
+
+func (ce *convError) Write(w http.ResponseWriter) {
+	http.Error(w, ce.Error(), ce.code)
+}
