@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -16,6 +17,7 @@ import (
 
 var configpath = flag.String("conf", "conf.toml", "config file path (default: conf.toml)")
 var port = flag.Int("port", 8080, "listen port")
+var quiet = flag.Bool("q", false, "quiet")
 
 func main() {
 	flag.Parse()
@@ -28,6 +30,10 @@ func main() {
 			debug.FreeOSMemory()
 		}
 	}()
+	if *quiet {
+		log.SetOutput(ioutil.Discard)
+	}
+
 	f, err := os.Open(*configpath)
 	if err != nil {
 		log.Fatalf("config file open failed %+v", err)
