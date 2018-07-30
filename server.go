@@ -61,32 +61,33 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	for p, d := range h.paths {
 		matches := p.FindStringSubmatch(upath)
-		if len(matches) != 0 {
-			vars := map[string]interface{}{}
-			for i, m := range matches {
-				s := fmt.Sprintf("$%d", i)
-				vars[s] = m
-			}
-
-			for k, v := range d.Vars {
-				str, ok := v.(string)
-				if !ok {
-					vars[k] = v
-				}
-				if strings.HasPrefix(str, "$") {
-					val, ok := vars[str]
-					if ok {
-						vars[k] = val
-					}
-				}
-			}
-			ctx := context.WithValue(r.Context(), "vars", vars)
-			ctx = context.WithValue(ctx, "drc", d)
-			ctx = context.WithValue(ctx, "upath", upath)
-
-			serve(w, r.WithContext(ctx))
-			return
+		if len(matches) == 0 {
+			continue
 		}
+
+		vars := map[string]interface{}{}
+		for i, m := range matches {
+			s := fmt.Sprintf("$%d", i)
+			vars[s] = m
+		}
+
+		for k, v := range d.Vars {
+			str, ok := v.(string)
+			if !ok {
+				vars[k] = v
+			}
+			if strings.HasPrefix(str, "$") {
+				val, ok := vars[str]
+				if ok {
+					vars[k] = val
+				}
+			}
+		}
+		ctx := context.WithValue(r.Context(), "vars", vars)
+		ctx = context.WithValue(ctx, "drc", d)
+		ctx = context.WithValue(ctx, "upath", upath)
+		serve(w, r.WithContext(ctx))
+		return
 	}
 	http.Error(w, http.StatusText(404), 404)
 }
