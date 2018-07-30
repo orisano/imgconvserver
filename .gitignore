@@ -19,3 +19,5 @@ vendor
 bin
 tmp
 # End of https://www.gitignore.io/api/go
+
+bench/images
