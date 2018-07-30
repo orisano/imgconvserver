@@ -2,18 +2,13 @@ package imgconvserver
 
 import (
 	"context"
-	"os"
-
+	"io/ioutil"
 	"strings"
 
-	"io/ioutil"
-
 	"github.com/pkg/errors"
-	"sync"
 )
 
 type Fetcher interface {
-	Init()
 	Fetch(ctx context.Context, src *ImgSrc) ([]byte, error)
 }
 
@@ -21,7 +16,6 @@ var fetchers = map[string]Fetcher{}
 
 func init() {
 	fetcher := &fsFetcher{}
-	fetcher.Init()
 	fetchers["fs"] = fetcher
 }
 
@@ -34,13 +28,7 @@ func Fetch(ctx context.Context, src *ImgSrc) ([]byte, error) {
 	return fetcher.Fetch(ctx, src)
 }
 
-type fsFetcher struct {
-	cache *sync.Map
-}
-
-func (f *fsFetcher) Init() {
-	f.cache = &sync.Map{}
-}
+type fsFetcher struct{}
 
 func (f *fsFetcher) Fetch(ctx context.Context, src *ImgSrc) ([]byte, error) {
 	root := src.Root
@@ -48,25 +36,5 @@ func (f *fsFetcher) Fetch(ctx context.Context, src *ImgSrc) ([]byte, error) {
 		root = root + "/"
 	}
 	p := root + src.Path
-	// if b, ok := f.imgcache.Load(p); ok {
-	// 	bt, _ := b.([]byte)
-	// 	buf := make([]byte, len(bt))
-	// 	copy(buf, bt)
-	// 	return buf, nil
-	// }
-
-	fi, err := os.Open(p)
-	if err != nil {
-		return nil, err
-	}
-	defer fi.Close()
-	b, err := ioutil.ReadAll(fi)
-	if err != nil {
-		return nil, err
-	}
-	// buf := make([]byte, len(b))
-	// copy(buf, b)
-	// f.imgcache.Store(p, b)
-
-	return b, nil
+	return ioutil.ReadFile(p)
 }
