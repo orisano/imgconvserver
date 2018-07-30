@@ -11,8 +11,6 @@ import (
 
 	"github.com/akito0107/imgconvserver"
 	_ "github.com/akito0107/imgconvserver/engine/imaging"
-	"time"
-	"runtime/debug"
 )
 
 var configpath = flag.String("conf", "conf.toml", "config file path (default: conf.toml)")
@@ -23,12 +21,6 @@ func main() {
 	flag.Parse()
 	go func() {
 		log.Println(http.ListenAndServe("localhost:6060", nil))
-	}()
-	go func() {
-		t := time.NewTicker(10 * time.Second)
-		for range t.C {
-			debug.FreeOSMemory()
-		}
 	}()
 	if *quiet {
 		log.SetOutput(ioutil.Discard)
