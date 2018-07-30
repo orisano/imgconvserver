@@ -1,33 +1,34 @@
 package imgconvserver
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"image"
 	"log"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	_ "image/jpeg"
 	_ "image/png"
 
 	_ "golang.org/x/image/webp"
-
-	"bytes"
-	"strconv"
-	"time"
+	"golang.org/x/sync/singleflight"
 
 	"github.com/akito0107/imgconvserver/engine"
 	"github.com/akito0107/imgconvserver/format"
-	"sync"
-	"io"
 )
 
 const TimeFormat = "Mon, 02 Jan 2006 15:04:05 GMT"
 
 var cache sync.Map
 var imgcache sync.Map
+var sfg singleflight.Group
+var isfg singleflight.Group
 
 type handler struct {
 	conf  *DefaultConfig
@@ -38,7 +39,7 @@ type handler struct {
 
 type record struct {
 	storedAt time.Time
-	buf      bytes.Buffer
+	buf      []byte
 }
 
 func Server(conf *ServerConfig) http.Handler {
@@ -111,87 +112,120 @@ func serve(w http.ResponseWriter, r *http.Request) {
 	vars := r.Context().Value("vars").(map[string]interface{})
 	upath := r.Context().Value("upath").(string)
 
-	src := &ImgSrc{
-		Type: getOptValueString(drc.Src.Type, vars),
-		Root: getOptValueString(drc.Src.Root, vars),
-		Path: getOptValueString(drc.Src.Path, vars),
-		Url:  getOptValueString(drc.Src.Url, vars),
-	}
-
-	file, err := Fetch(r.Context(), src)
-	if err != nil {
-		log.Println(err)
-		http.Error(w, http.StatusText(404), 404)
-		return
-	}
-
-	engtype := getOptValueString(drc.Engine, vars)
-	eng, ok := engine.Engines[engtype]
-	if !ok {
-		log.Printf("Unsupported Engine %s", engtype)
-		http.Error(w, http.StatusText(400), 400)
-		return
-	}
-
-	opt := &engine.ConvertOptions{}
-
-	if err := completionOptions(opt, drc, vars); err != nil {
-		http.Error(w, http.StatusText(400), 400)
-		return
-	}
-
-	// if cvt, ok := eng.(engine.Converter); ok {
-	// 	if err := cvt.Convert(w, file, opt); err != nil {
-	// 		http.Error(w, http.StatusText(500), 500)
-	// 	}
-	// 	return
-	// }
-
-	resizer, ok := eng.(engine.Resizer)
-	if !ok && opt.Resize {
-		http.Error(w, http.StatusText(400), 400)
-		return
-	}
-
-	encoder, ok := eng.(engine.Encoder)
-	if !ok {
-		log.Println("using Default Encoder")
-		encoder = &engine.DefaultEncoder{}
-	}
-
-	im, err := decodeImage(upath, file)
-
-	if err != nil {
-		http.Error(w, http.StatusText(400), 400)
-		return
-	}
-	for _, c := range drc.Converts {
-		switch c.Type {
-		case "resize":
-			im, err = resizer.Resize(im, &engine.ResizeOptions{
-				Dw: opt.Dw,
-				Dh: opt.Dh,
-			})
-			if err != nil {
-				http.Error(w, http.StatusText(500), 500)
-				return
+	var rec *record
+	if res, ok := cache.Load(upath); ok {
+		rec = res.(*record)
+	} else {
+		res, err, _ := sfg.Do(upath, func() (interface{}, error) {
+			src := &ImgSrc{
+				Type: getOptValueString(drc.Src.Type, vars),
+				Root: getOptValueString(drc.Src.Root, vars),
+				Path: getOptValueString(drc.Src.Path, vars),
+				Url:  getOptValueString(drc.Src.Url, vars),
 			}
-		default:
-			log.Printf("unsupported function pattern %s\n", c.Type)
-			http.Error(w, http.StatusText(400), 400)
+
+			var im image.Image
+			if res, ok := imgcache.Load(src.Path); ok {
+				im = res.(image.Image)
+			} else {
+				res, err, _ := isfg.Do(src.Path, func() (interface{}, error) {
+					file, err := Fetch(r.Context(), src)
+					if err != nil {
+						return nil, &convError{
+							code: http.StatusNotFound,
+							err:  err,
+						}
+					}
+					im, err := decodeImage(upath, file)
+					if err != nil {
+						return nil, &convError{
+							code: http.StatusBadRequest,
+							err:  err,
+						}
+					}
+					imgcache.Store(src.Path, im)
+					return im, nil
+				})
+				if err != nil {
+					return nil, err
+				}
+				im = res.(image.Image)
+			}
+
+			engtype := getOptValueString(drc.Engine, vars)
+			eng, ok := engine.Engines[engtype]
+			if !ok {
+				log.Printf("Unsupported Engine %s", engtype)
+				return nil, &convError{
+					code: http.StatusBadRequest,
+				}
+			}
+
+			opt := &engine.ConvertOptions{}
+			if err := completionOptions(opt, drc, vars); err != nil {
+				return nil, &convError{
+					code: http.StatusBadRequest,
+					err:  err,
+				}
+			}
+			resizer, ok := eng.(engine.Resizer)
+			if !ok && opt.Resize {
+				return nil, &convError{
+					code: http.StatusBadRequest,
+				}
+			}
+			encoder, ok := eng.(engine.Encoder)
+			if !ok {
+				log.Println("using Default Encoder")
+				encoder = &engine.DefaultEncoder{}
+			}
+
+			var err error
+			for _, c := range drc.Converts {
+				switch c.Type {
+				case "resize":
+					im, err = resizer.Resize(im, &engine.ResizeOptions{
+						Dw: opt.Dw,
+						Dh: opt.Dh,
+					})
+					if err != nil {
+						return nil, &convError{
+							code: http.StatusInternalServerError,
+							err:  err,
+						}
+					}
+				default:
+					log.Printf("unsupported function pattern %s\n", c.Type)
+					return nil, &convError{
+						code: http.StatusBadRequest,
+					}
+				}
+			}
+
+			var b bytes.Buffer
+			if err := encoder.Encode(&b, im, &engine.EncodeOptions{
+				Format:  opt.Format,
+				Quality: opt.Quality,
+			}); err != nil {
+				return nil, &convError{
+					code: http.StatusBadRequest,
+					err:  err,
+				}
+			}
+			rec := &record{buf: b.Bytes(), storedAt: time.Now()}
+			cache.Store(upath, rec)
+			return rec, nil
+		})
+		if err != nil {
+			err.(*convError).Write(w)
 			return
 		}
+		rec = res.(*record)
 	}
-	now := time.Now()
-	w.Header().Set("Last-Modified", now.Format(TimeFormat))
-	var buf bytes.Buffer
-	wr := io.MultiWriter(&buf, w)
-	encoder.Encode(wr, im, &engine.EncodeOptions{
-		Format:  opt.Format,
-		Quality: opt.Quality,
-	})
-
-	cache.Store(upath, &record{storedAt: now, buf: buf})
+	w.Header().Set("Last-Modified", rec.storedAt.Format(TimeFormat))
+	if _, err := w.Write(rec.buf); err != nil {
+		log.Printf("write error: %+v", err)
+	}
 }
 
 func getOptValue(value interface{}, vars map[string]interface{}) interface{} {
