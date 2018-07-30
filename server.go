@@ -32,6 +32,8 @@ var imgcache sync.Map
 type handler struct {
 	conf  *DefaultConfig
 	paths map[*regexp.Regexp]Directive
+
+	semaphore chan struct{}
 }
 
 type record struct {
@@ -46,6 +48,8 @@ func Server(conf *ServerConfig) http.Handler {
 		paths[pat] = d
 	}
 	return &handler{
+		semaphore: make(chan struct{}, 32),
+
 		conf:  &conf.Default,
 		paths: paths,
 	}
@@ -86,7 +90,17 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), "vars", vars)
 		ctx = context.WithValue(ctx, "drc", d)
 		ctx = context.WithValue(ctx, "upath", upath)
-		serve(w, r.WithContext(ctx))
+
+		t := time.NewTimer(3 * time.Second)
+		select {
+		case h.semaphore <- struct{}{}:
+			serve(w, r.WithContext(ctx))
+			<-h.semaphore
+			t.Stop()
+		case <-t.C:
+			http.Error(w, http.StatusText(http.StatusServiceUnavailable), http.StatusServiceUnavailable)
+			t.Stop()
+		}
 		return
 	}
 	http.Error(w, http.StatusText(404), 404)
