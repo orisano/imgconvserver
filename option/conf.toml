@@ -11,7 +11,7 @@ engine = "$engine"
 "$filepath" = "$4"
 [directives.src]
 type = "fs"
-root = "./tmp"
+root = "./bench/images"
 path = "$filepath"
 [directives.out]
 format = "jpeg"
